@@ -47,6 +47,7 @@ abstract class React {
   external static ReactClass forwardRef(Function(JsMap props, JsRef ref) wrapperFunction);
 
   external static List<dynamic> useState(dynamic value);
+  external static List<dynamic> useReducer(Function reducer, dynamic initialState, [Function init]);
   external static Function useCallback(Function callback, List dependencies);
 }
 

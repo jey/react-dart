@@ -21,6 +21,52 @@ UseStateTestComponent(Map props) {
   ]);
 }
 
+var useReducerTestFunctionComponent =
+    react.registerFunctionComponent(UseReducerTestComponent, displayName: 'useReducerTest');
+
+Map initializeCount(int initialValue) {
+  return {'count': initialValue};
+}
+
+Map reducer(Map state, Map action) {
+  switch (action['type']) {
+    case 'increment':
+      return {...state, 'count': state['count'] + 1};
+    case 'decrement':
+      return {...state, 'count': state['count'] - 1};
+    case 'reset':
+      return initializeCount(action['payload']);
+    default:
+      return state;
+  }
+}
+
+UseReducerTestComponent(Map props) {
+  final ReducerHook<Map, Map, int> state = useReducerLazy(reducer, props['initialCount'], initializeCount);
+
+  return react.Fragment({}, [
+    state.state['count'],
+    react.button({
+      'onClick': (_) => state.dispatch({'type': 'increment'})
+    }, [
+      '+'
+    ]),
+    react.button({
+      'onClick': (_) => state.dispatch({'type': 'decrement'})
+    }, [
+      '-'
+    ]),
+    react.button({
+      'onClick': (_) => state.dispatch({
+            'type': 'reset',
+            'payload': props['initialCount'],
+          })
+    }, [
+      'reset'
+    ]),
+  ]);
+}
+
 var useCallbackTestFunctionComponent =
     react.registerFunctionComponent(UseCallbackTestComponent, displayName: 'useCallbackTest');
 
@@ -54,6 +100,12 @@ void main() {
           react.h2({'key': 'useStateTestLabel'}, ['useState Hook Test']),
           useStateTestFunctionComponent({
             'key': 'useStateTest',
+          }, []),
+          react.br({}),
+          react.h2({'key': 'useReducerTestLabel'}, ['useReducer Hook Test']),
+          useReducerTestFunctionComponent({
+            'key': 'useReducerTest',
+            'initialCount': 10,
           }, []),
           react.br({}),
           react.h2({'key': 'useCallbackTestLabel'}, ['useCallback Hook Test']),
