@@ -8,6 +8,7 @@ import 'dart:html';
 import "package:js/js.dart";
 import 'package:react/hooks.dart';
 import 'package:react/react.dart' as react;
+import 'package:react/react.dart';
 import 'package:react/react_client.dart';
 import 'package:react/react_dom.dart' as react_dom;
 import 'package:react/react_test_utils.dart' as react_test_utils;
@@ -376,5 +377,90 @@ main() {
         });
       });
     });
+
+    group('useContext -', () {
+      var mountNode = DivElement();
+      _ContextProviderWrapper providerRef;
+      int currentCount = 0;
+      Context testContext;
+      Function useContextTestFunctionComponent;
+
+      setUp(() {
+        UseContextTestComponent(Map props) {
+          final context = useContext(testContext);
+          currentCount = context;
+          return react.div({
+            'key': 'uct1'
+          }, [
+            react.div({'key': 'uct2'}, ['useContext counter value is ${context}']),
+          ]);
+        }
+
+        testContext = react.createContext(1, calculateChangedBits);
+        useContextTestFunctionComponent =
+            react.registerFunctionComponent(UseContextTestComponent, displayName: 'useContextTest');
+
+        react_dom.render(
+            ContextProviderWrapper({
+              'contextToUse': testContext,
+              'mode': 'increment',
+              'ref': (ref) {
+                providerRef = ref;
+              }
+            }, [
+              useContextTestFunctionComponent({'key': 't1'}, []),
+            ]),
+            mountNode);
+      });
+
+      tearDown(() {
+        currentCount = 0;
+        testContext = null;
+        useContextTestFunctionComponent = null;
+        providerRef = null;
+      });
+
+      group('updates with the correct values', () {
+        test('on first render', () {
+          expect(currentCount, 1);
+        });
+
+        test('on value updates', () {
+          providerRef.increment();
+          expect(currentCount, 2);
+          providerRef.increment();
+          expect(currentCount, 3);
+          providerRef.increment();
+          expect(currentCount, 4);
+        });
+      });
+    });
   });
+}
+
+int calculateChangedBits(currentValue, nextValue) {
+  int result = 1 << 1;
+  if (nextValue % 2 == 0) {
+    result |= 1 << 2;
+  }
+  return result;
+}
+
+ReactDartComponentFactoryProxy2 ContextProviderWrapper = react.registerComponent(() => new _ContextProviderWrapper());
+
+class _ContextProviderWrapper extends react.Component2 {
+  get initialState {
+    return {'counter': 1};
+  }
+
+  increment() {
+    this.setState({'counter': state['counter'] + 1});
+  }
+
+  render() {
+    return react.div({}, [
+      props['contextToUse']
+          .Provider({'value': props['mode'] == 'increment' ? state['counter'] : props['value']}, props['children'])
+    ]);
+  }
 }
